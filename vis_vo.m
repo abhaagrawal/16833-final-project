@@ -11,21 +11,33 @@ system(strcat("python csv_scale.py ",coord_path,...
     " ",string(scale)," -o ",scaled_coord_doc));
 
 vo = readmatrix(scaled_coord_doc);
-pos = zeros(4,size(vo,1)+1);
-rot = eye(3);
+
 
 %%
+pos = zeros(4,size(vo,1)+1);
+rot = eye(3);
 for i = 1:size(vo,1)
-    H = [rot vo(i,1:3)'; 0 0 0 1];
-    pos(:,i+1) = H * pos(:,i);
-    rot = rotz(rad2deg(vo(i,6)))...
-        * roty(rad2deg(vo(i,5)))...
-        * rotx(rad2deg(vo(i,4))) * rot;
+    H = [rot zeros(3,1); zeros(1,3) 1];
+    pos(:,i+1) = pos(:,i) + H * [vo(i,1:3) 1]';
+    %pos(:,i+1) = H * pos(:,i);
+    rot = rotz(rad2deg(vo(i,6)/scale))...
+        * roty(rad2deg(vo(i,5)/scale))...
+        * rotx(rad2deg(vo(i,4)/scale)) * rot;
+    
+    %plot3(pos(1,1:i),pos(2,1:i),pos(3,1:i))
+    %grid on
+    %xlabel("X")
+    %ylabel("Y")
+    %zlabel("Z")
+    %pause(0.001)
 end
 
-plot3(state(1,:),state(2,:),state(3,:))
-
+plot3(pos(1,:),pos(2,:),pos(3,:))
+grid on
+xlabel("X")
+ylabel("Y")
+zlabel("Z")
 % Limit axis
-ylim(xlim-(sum(xlim)/2));
-xlim(xlim-(sum(xlim)/2));
-
+%ylim(xlim-(sum(xlim)/2));
+%xlim(xlim-(sum(xlim)/2));
+%
