@@ -29,7 +29,7 @@ for i = 1:size(vo,1)
     meas(4:6) = meas(4:6)/scale;
     state(:,i+1) = prediction_step(state(:,i),[],meas');
 end
-pos = state(1:3,:);
+pos = state(1:3,:)/scale;
 
 %% Plot and save figures
 close all
