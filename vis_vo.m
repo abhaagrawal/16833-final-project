@@ -1,5 +1,5 @@
 %% visualize visual odometry
-
+addPaths
 data_dir = "..\data\2015-11-13-10-28-08_vo\2015-11-13-10-28-08\vo\";
 coord_doc = "vo-coord.csv";
 scaled_coord_doc = "vo-coord-scaled.csv";
@@ -13,17 +13,23 @@ system(strcat("python csv_scale.py ",coord_path,...
 vo = readmatrix(scaled_coord_doc);
 
 %% Calculate
-pos = zeros(4,size(vo,1)+1);
-rot = eye(3);
+%pos = zeros(4,size(vo,1)+1);
+%rot = eye(3);
+%for i = 1:size(vo,1)
+%    H = [rot zeros(3,1); zeros(1,3) 1];
+%    pos(:,i+1) = pos(:,i) + H * [vo(i,1:3) 1]';
+%    rot = rotz(rad2deg(vo(i,6)/scale))...
+%        * roty(rad2deg(vo(i,5)/scale))...
+%        * rotx(rad2deg(vo(i,4)/scale)) * rot;
+%end
+%pos = pos / scale;
+state = zeros(6,size(vo,1)+1);
 for i = 1:size(vo,1)
-    H = [rot zeros(3,1); zeros(1,3) 1];
-    pos(:,i+1) = pos(:,i) + H * [vo(i,1:3) 1]';
-    %pos(:,i+1) = H * pos(:,i);
-    rot = rotz(rad2deg(vo(i,6)/scale))...
-        * roty(rad2deg(vo(i,5)/scale))...
-        * rotx(rad2deg(vo(i,4)/scale)) * rot;
+    meas = vo(i,:);
+    meas(4:6) = meas(4:6)/scale;
+    state(:,i+1) = prediction_step(state(:,i),[],meas');
 end
-pos = pos / scale;
+pos = state(1:3,:);
 
 %% Plot and save figures
 close all
@@ -85,7 +91,7 @@ saveas(fig_xz,strcat(image_folder,'/vo_xz'),'fig')
 saveas(fig_xz,strcat(image_folder,'/vo_xz'),'png')
 saveas(fig_yz,strcat(image_folder,'/vo_yz'),'fig')
 saveas(fig_yz,strcat(image_folder,'/vo_yz'),'png')
-close all
+%close all
 %% Plot fancy
 
 max_dim = max(pos(1:3,:),[],'all');

@@ -1,0 +1,9 @@
+function [rot] = eular_xyz(rot_x,rot_y,rot_z)
+%EULAR_XYZ Compute an eular xyz matrix from three rotation angles
+%   Rotates in order of roll pith yaw, x point forward z points up
+rot = ...
+      rotz(rad2deg(rot_z))...
+    * roty(rad2deg(rot_y))...
+    * rotx(rad2deg(rot_x));
+end
+
