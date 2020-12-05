@@ -2,13 +2,9 @@
 [vo,vo_time,scale] = get_vo();
 
 %% Calculate
-state = zeros(6,size(vo,1)+1);
-for i = 1:size(vo,1)
-    meas = vo(i,:);
-    meas(4:6) = meas(4:6)/scale;
-    state(:,i+1) = prediction_step(state(:,i),[],meas');
-end
-pos = state(1:3,:)/scale;
+vo(:,4:6) = vo(:,4:6)/scale; % Remove scaling from rotation values
+state = odometryToState(zeros(6,1),vo);
+pos = state(1:3,:)/scale; % Remove scaling from translation values
 
 %% Plot and save figures
 close all

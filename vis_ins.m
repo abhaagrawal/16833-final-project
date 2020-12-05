@@ -1,18 +1,7 @@
 %% visualize gps ins
-addPaths
-data_dir = "..\data\2015-11-13-10-28-08_gps\2015-11-13-10-28-08\gps\";
-coord_doc = "ins-pose.csv";
-scaled_coord_doc = "ins-pose-scaled.csv";
-%scale = 10000;
-%coord_path = strcat(data_dir,coord_doc);
+[ins,time] = get_ins();
+pos = ins';
 
-% Call python script to scale the data
-%system(strcat("python csv_scale.py ",coord_path,...
-%    " ",string(scale)," -o ",scaled_coord_doc));
-%
-pos = readmatrix(strcat(data_dir,coord_doc));
-pos = pos';
-size(pos)
 %% Plot and save figures
 close all
 fig_3d = figure;

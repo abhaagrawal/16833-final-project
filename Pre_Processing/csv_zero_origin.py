@@ -23,12 +23,10 @@ with open(args.infile, newline='') as infile:
 		is_first_line = True
 		
 		for line in reader:
-			if is_first_line:
-				print("update first_values")
-				
+			if is_first_line:				
 				first_values = copy.deepcopy(line)
 				is_first_line = False;
 
 			for i in range(len(line)):
-				line[i] = str(int(line[i]) - int(first_values[0]))
+				line[i] = str(int(line[i]) - int(first_values[len(first_values)-1]))
 			writer.writerow(line)
