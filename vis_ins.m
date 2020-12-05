@@ -1,15 +1,18 @@
-%% visualize visual odometry
-[vo,vo_time,scale] = get_vo();
+%% visualize gps ins
+addPaths
+data_dir = "..\data\2015-11-13-10-28-08_gps\2015-11-13-10-28-08\gps\";
+coord_doc = "ins-pose.csv";
+scaled_coord_doc = "ins-pose-scaled.csv";
+%scale = 10000;
+%coord_path = strcat(data_dir,coord_doc);
 
-%% Calculate
-state = zeros(6,size(vo,1)+1);
-for i = 1:size(vo,1)
-    meas = vo(i,:);
-    meas(4:6) = meas(4:6)/scale;
-    state(:,i+1) = prediction_step(state(:,i),[],meas');
-end
-pos = state(1:3,:)/scale;
-
+% Call python script to scale the data
+%system(strcat("python csv_scale.py ",coord_path,...
+%    " ",string(scale)," -o ",scaled_coord_doc));
+%
+pos = readmatrix(strcat(data_dir,coord_doc));
+pos = pos';
+size(pos)
 %% Plot and save figures
 close all
 fig_3d = figure;
@@ -23,7 +26,7 @@ xlabel("X (m)")
 ylabel("Y (m)")
 zlabel("Z (m)")
 grid on
-title("3D view of path from visual odometry ")
+title("3D view of path from gps-inertial ")
 
 fig_xy = figure;
 plot(pos(2,:),pos(1,:))
@@ -35,7 +38,7 @@ legend("Path","Start","Finish")
 legend('Location','southwest')
 xlabel("X (m)")
 ylabel("Y (m)")
-title("Car Path from VO. Top View")
+title("Car Path from INS. Top View")
 
 fig_xz = figure;
 plot(pos(1,:),pos(3,:))
@@ -47,7 +50,7 @@ legend("Path","Start","Finish")
 legend('Location','northwest')
 xlabel("X (m)")
 ylabel("Z (m)")
-title("Car Path from VO. Side view (looking in +y direction)")
+title("Car Path from INS. Side view (looking in +y direction)")
 
 fig_yz = figure;
 plot(pos(2,:),pos(3,:))
@@ -71,21 +74,3 @@ saveas(fig_xz,strcat(image_folder,'/vo_xz'),'png')
 saveas(fig_yz,strcat(image_folder,'/vo_yz'),'fig')
 saveas(fig_yz,strcat(image_folder,'/vo_yz'),'png')
 %close all
-%% Plot fancy
-if (0)
-max_dim = max(pos(1:3,:),[],'all');
-min_dim = min(pos(1:3,:),[],'all');
-for i = 1:size(pos,2)
-    plot3(pos(1,1:i),pos(2,1:i),pos(3,1:i))
-    grid on
-    
-    %xlim([min_dim max_dim])
-    %ylim([min_dim max_dim])
-    %zlim([min_dim max_dim])
-    pause(0.000001)
-end
-end
-% Limit axis
-%ylim(xlim-(sum(xlim)/2));
-%xlim(xlim-(sum(xlim)/2));
-%
