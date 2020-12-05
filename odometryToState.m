@@ -1,5 +1,7 @@
 function [state] = odometryToState(initial_state,odom)
 %ODOMETRYTOSOLUTION takes in odometry and returns a state vector
+%   [state] = odometryToState(initial_state,odom)
+%
 %   State is in [tx ty tz rx ry rz]'
 %   State is 6 x num_odom+1
 %   Odom is in [tx ty tz rx ry rz]
@@ -10,4 +12,3 @@ function [state] = odometryToState(initial_state,odom)
         state(:,i+1) = prediction_step(state(:,i),[],meas');
     end
 end
-

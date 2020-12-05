@@ -1,6 +1,7 @@
 %% visualize gps ins
+% Shows gps inertial solution data
 [ins,time] = get_ins();
-pos = ins';
+pos = ins;
 
 %% Plot and save figures
 close all

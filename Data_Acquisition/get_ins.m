@@ -1,6 +1,9 @@
 function [ins,time] = get_ins()
-%GET_INS Summary of this function goes here
+%GET_INS Get gps and inertial solution
 %   INS is absolute positions
+%   [ins,time] = get_ins()
+%   ins is 6 x num_states
+%   time is num_states x 1
 data_dir = "..\data\2015-11-13-10-28-08_gps\2015-11-13-10-28-08\gps\";
 coord_doc = "ins-pose.csv";
 time_doc = "ins-time.csv";
@@ -19,6 +22,6 @@ system(strcat("python Pre_Processing/csv_scale.py ",zero_origin_time_doc,...
     " --div "));
 
 time = readmatrix(zero_origin_time_scaled_doc);
-ins = readmatrix(coord_path);
+ins = readmatrix(coord_path)';
 end
 
