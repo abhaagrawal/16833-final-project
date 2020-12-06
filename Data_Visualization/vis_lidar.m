@@ -2,7 +2,6 @@ addPaths
 date = "2014-06-25-16-22-15";
 scans = get_lidar(date,1);
 
-
 %% Construct odom
 num_scans = size(scans,1);
 odom = zeros(num_scans-1,6); % [tx ty tz rx ry rz]
@@ -14,7 +13,8 @@ end
 state = odometryToState(zeros(6,1),odom);
 visualize_state(state,"lidar");
 
-if(1)
+if(0)
+figure
 min = 1;
 max = 2;
 x = 1;
