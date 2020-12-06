@@ -1,19 +1,20 @@
-function [scans] = get_lidar(use_raw)
+function [scans] = get_lidar(date,use_raw)
 % GET_LIDAR Returns the lidar data
 %       Points is of type cell
 %       Points has dimension num_scans x 1
 %       Each entry in points is a pointcloud
-if nargin < 1
+assert(nargin >= 1, "Please provide a date")
+if nargin < 2
     use_raw = false;
 end
 
 data_dir = "robotcar-dataset-sdk-3.1\python\";
 if use_raw
-    xyz_doc = "2014-05-06-12-54-54.csv";
+    xyz_doc = sprintf("%s.csv",date);
 else
-    xyz_doc = "2014-05-06-12-54-54_icp.csv";
+    xyz_doc = sprintf("%s_icp.csv",date);
 end
-pts_per_time_doc = "2014-05-06-12-54-54_points_per_timestep.csv";
+pts_per_time_doc = sprintf("%s_points_per_timestep.csv",date);
 
 xyz_path = strcat(data_dir,xyz_doc);
 pts_per_time_path = strcat(data_dir,pts_per_time_doc);

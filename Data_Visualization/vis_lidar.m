@@ -1,5 +1,6 @@
 addPaths
-scans = get_lidar(1);
+date = "2014-06-25-16-22-15";
+scans = get_lidar(date,1);
 
 min = 1;
 max = 2;

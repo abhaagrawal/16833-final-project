@@ -1,7 +1,8 @@
 %% Sanity Check: Make sure it runs
-get_ins();
-get_vo();
-get_lidar(0);
-get_lidar(1);
+date = "2014-06-25-16-22-15";
+get_ins(date);
+get_vo(date);
+get_lidar(date,0);
+get_lidar(date,1);
 
 disp("Data Acquisition Unit Tests: Passed")

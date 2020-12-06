@@ -1,5 +1,6 @@
 %% visualize visual odometry
-[vo,vo_time,scale] = get_vo();
+date = "2014-06-25-16-22-15";
+[vo,vo_time,scale] = get_vo(date);
 
 %% Calculate
 vo(:,4:6) = vo(:,4:6)/scale; % Remove scaling from rotation values
