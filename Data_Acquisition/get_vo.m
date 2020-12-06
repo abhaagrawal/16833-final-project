@@ -1,7 +1,9 @@
-function [vo,time,vo_scale] = get_vo()
+function [vo,time,vo_scale] = get_vo(date)
 %GET_VO Returns visual odometry information scaled by vo_scale
 addPaths
-data_dir = "..\data\2015-11-13-10-28-08_vo\2015-11-13-10-28-08\vo\";
+assert(nargin == 1, "Please provide a date")
+%data_dir = "..\data\2015-11-13-10-28-08_vo\2015-11-13-10-28-08\vo\";
+data_dir = sprintf("..\\data\\%s_vo\\%s\\vo\\",date,date);
 coord_doc = "vo-coord.csv";
 time_doc = "vo-time.csv";
 scaled_coord_doc = "vo-coord-scaled.csv";
