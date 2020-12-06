@@ -1,6 +1,18 @@
 addPaths
-scans = get_lidar(1);
+scans = get_lidar(1); % Get the raw data
 
+%% Construct odom
+num_scans = size(scans,1);
+odom = zeros(num_scans-1,6); % [tx ty tz rx ry rz]
+for i = 1:size(odom,1)
+    rig3d = pcregistericp(scans{i+1},scans{i});
+    eul = rotm2eul(rig3d.Rotation,'XYZ');
+    odom(i,:) = [rig3d.Translation eul];
+end
+state = odometryToState(zeros(6,1),odom);
+visualize_state(state,"lidar");
+
+if(1)
 min = 1;
 max = 2;
 x = 1;
@@ -35,4 +47,5 @@ for i = 1:size(scans,1)
     
     % Use largest limits
     
+end
 end
