@@ -3,3 +3,4 @@ addpath ../
 addpath Kalman
 addpath Pre_Processing
 addpath Data_Acquisition
+addpath Data_Visualization
