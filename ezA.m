@@ -36,7 +36,8 @@ end
 
 % How close lidar and vo need to be to count as same time
 vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq))
-gps_epsilon = 2*abs((1/gps_freq) - (1/lidar_freq))
+gps_lidar_time_epsilon = 2*abs((1/gps_freq) - (1/lidar_freq));
+ins_lidar_time_epsilon = 2*abs((1/ins_freq) - (1/lidar_freq))
 
 next_lidar_scan_index = 1;
 global_pointcloud = [];
@@ -85,11 +86,12 @@ for i = 1:size(vo_state,2)
             % Get diff in state from last sync via vo
 
             %vo_state_diff = state_at_last_sync - vo_state(:,i);
-            vo_state_diff = zeros(6,1);
-            for j = vo_index_at_last_sync:i-1
-                vo_state_diff = prediction_step(vo_state_diff,[],...
-                    vo(j,:)');
-            end
+            vo_state_diff = vo_state(:,i) - state_at_last_sync ;
+            %vo_state_diff = zeros(6,1);
+            %for j = vo_index_at_last_sync:i-1
+            %    vo_state_diff = prediction_step(vo_state_diff,[],...
+            %        vo(j,:)');
+            %end
 
             % Get diff in state from last sync via lidar
             rig3d = ...
@@ -126,18 +128,19 @@ for i = 1:size(vo_state,2)
             state_at_last_sync = new_state_estimate;
             
             % Compare with GPS data
-            for j = last_gps_idx:size(gps_time,1)
+            for j = last_gps_idx:size(ins_time,1)
                 %disp(gps_time(j) - vo_time(j))
-                if ((gps_time_s(j) - vo_time_s(i)) < gps_epsilon)
+                if ((ins_time_s(j) - vo_time_s(i)) < ins_lidar_time_epsilon)
                     if (j>100)
                         disp(j)
-                        disp(gps_time_s(j))
+                        disp(ins_time_s(j))
                         %disp(vo_time(j))
-                        disp(gps(:,j))
-                        disp(gps(:,1))
+                        disp(ins(:,j))
+                        disp(ins(:,1))
                         disp(new_state_estimate)
                     end
-                    error = [error ; norm((gps(1:end,j)-gps(1:end,1))-new_state_estimate(1:3,1))];
+                    %error = [error ; norm((ins(1:3,j)-ins(1:3,1))-new_state_estimate(1:3,1))];
+                    error = [error ; norm((gps(1:3,j)-gps(1:3,1))-new_state_estimate(1:3,1))];
                     last_gps_idx = j+1;
                     break;
                 end
