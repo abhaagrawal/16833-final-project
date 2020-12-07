@@ -5,9 +5,11 @@ function [gps,time,time_scale] = get_gps(date)
 %   ins is 6 x num_states
 %   time is num_states x 1
 assert(nargin == 1, "Please provide a date")
-%data_dir = "..\data\2015-11-13-10-28-08_gps\2015-11-13-10-28-08\gps\";
-%data_dir = sprintf("Data\\%s\\",date);
-data_dir = sprintf("Data/%s/",date);
+if contains(system_dependent('getos'),"Windows")
+    data_dir = sprintf("Data\\%s\\",date);
+else
+    data_dir = sprintf("Data/%s/",date);
+end
 coord_doc = "gps-pose.csv";
 time_doc = "gps-time.csv";
 %zero_origin_time_doc = "time-zero_origin.csv";

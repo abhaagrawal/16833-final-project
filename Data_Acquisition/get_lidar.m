@@ -10,8 +10,11 @@ if nargin < 2
     use_raw = false;
 end
 
-%data_dir = sprintf("Data\\%s\\",date);
-data_dir = sprintf("Data/%s/",date);
+if contains(system_dependent('getos'),"Windows")
+    data_dir = sprintf("Data\\%s\\",date);
+else
+    data_dir = sprintf("Data/%s/",date);
+end
 if use_raw
     xyz_doc = "lidar.csv";
 else

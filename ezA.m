@@ -26,12 +26,12 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     gps_time_s = (gps_time-first_time)/milli;
     DATA_IS_LOADED = 1;
     fprintf("Done!\n")
+    
+    vo(:,4:6) = vo(:,4:6)/scale; % Remove scaling from rotation values
+    vo_state = odometryToState(zeros(6,1),vo);
+    vo_state(1:3,:) = vo_state(1:3,:)/scale; % Remove scaling from translation values
+    vo(:,1:3) = vo(:,1:3)/scale;
 end
-
-%% Calculate Vo State
-vo(:,4:6) = vo(:,4:6)/scale; % Remove scaling from rotation values
-vo_state = odometryToState(zeros(6,1),vo);
-vo_state(1:3,:) = vo_state(1:3,:)/scale; % Remove scaling from translation values
 %% ??????
 
 % How close lidar and vo need to be to count as same time
@@ -49,7 +49,7 @@ initial_lidar_scan_index = next_lidar_scan_index;
 
 % Keep track of state since vo and lidar last aligned
 state_at_last_sync = [];
-
+vo_index_at_last_sync = [];
 error = [];
 last_gps_idx = 1;
 
@@ -74,6 +74,7 @@ for i = 1:size(vo_state,2)
             vo_aff3d = affine3d(aff);    
             % Transform lidar scan to global frame
             state_at_last_sync = vo_state(:,i);
+            vo_index_at_last_sync = i;
             new_points_global = ...
                 pctransform(scans{next_lidar_scan_index},vo_aff3d);
             global_pointcloud = new_points_global;
@@ -82,16 +83,21 @@ for i = 1:size(vo_state,2)
             % COMPLEMENTARY FILTER
             % Get transform from lidar
             % Get diff in state from last sync via vo
-            %disp(vo_state(:,i))
-            %disp(state_at_last_sync)
-            %vo_state_diff = state_at_last_sync - vo_state(:,i)
-            vo_state_diff = vo_state(:,i) - state_at_last_sync;
+
+            %vo_state_diff = state_at_last_sync - vo_state(:,i);
+            vo_state_diff = zeros(6,1);
+            for j = vo_index_at_last_sync:i-1
+                vo_state_diff = prediction_step(vo_state_diff,[],...
+                    vo(j,:)');
+            end
+
             % Get diff in state from last sync via lidar
             rig3d = ...
                 pcregistericp(global_pointcloud,...
                     scans{next_lidar_scan_index});
             lidar_state_diff = ...
                 [rig3d.Translation rotm2eul(rig3d.Rotation)]';
+
             
             % Apply filter
             comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
@@ -147,6 +153,7 @@ for i = 1:size(vo_state,2)
         end
     end
 end
+
 pcshow(global_pointcloud)
 disp(error)
 
