@@ -7,7 +7,7 @@ function [vo,time,vo_scale] = get_vo(date)
 addPaths
 assert(nargin == 1, "Please provide a date")
 %data_dir = "..\data\2015-11-13-10-28-08_vo\2015-11-13-10-28-08\vo\";
-data_dir = sprintf("..\\data\\%s_vo\\%s\\vo\\",date,date);
+data_dir = sprintf("Data\\%s\\",date);
 coord_doc = "vo-coord.csv";
 time_doc = "vo-time.csv";
 scaled_coord_doc = "vo-coord-scaled.csv";

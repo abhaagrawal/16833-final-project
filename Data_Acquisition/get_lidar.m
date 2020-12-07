@@ -10,14 +10,14 @@ if nargin < 2
     use_raw = false;
 end
 
-data_dir = "robotcar-dataset-sdk-3.1\python\";
+data_dir = sprintf("Data\\%s\\",date);
 if use_raw
-    xyz_doc = sprintf("%s.csv",date);
+    xyz_doc = "lidar.csv";
 else
-    xyz_doc = sprintf("%s_icp.csv",date);
+    xyz_doc = "lidar_icp.csv";
 end
-time_doc = sprintf("%s_timestamps.csv",date);
-pts_per_time_doc = sprintf("%s_points_per_timestep.csv",date);
+time_doc = "lidar_timestamps.csv";
+pts_per_time_doc = "lidar_points_per_timestep.csv";
 
 xyz_path = strcat(data_dir,xyz_doc);
 time_path = strcat(data_dir,time_doc);
