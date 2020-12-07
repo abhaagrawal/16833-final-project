@@ -53,6 +53,7 @@ vo_index_at_last_sync = [];
 error = [];
 last_gps_idx = 1;
 
+disp(vo_state(:,end))
 % Loop through each vo state
 for i = 1:size(vo_state,2)
 %for i = 1:2
@@ -79,7 +80,8 @@ for i = 1:size(vo_state,2)
             global_pointcloud = new_points_global;
             continue
         end
-        % Else merge into global pointcloud
+    % Else merge into global pointcloud
+
         % COMPLEMENTARY FILTER
         % Get transform from lidar
         % Get diff in state from last sync via vo
@@ -90,6 +92,7 @@ for i = 1:size(vo_state,2)
             vo_state_diff = prediction_step(vo_state_diff,[],...
                 vo(j,:)');
         end
+
         % Get diff in state from last sync via lidar
         rig3d = ...
             pcregistericp(global_pointcloud,...
@@ -136,13 +139,15 @@ for i = 1:size(vo_state,2)
                     disp(gps(:,1))
                     disp(new_state_estimate)
                 end
-                error = [error ; norm((gps(:,j)-gps(:,1))-new_state_estimate(1:3,1))];
+                error = [error ; norm((gps(1:end,j)-gps(1:end,1))-new_state_estimate(1:3,1))];
                 last_gps_idx = j+1;
                 break;
             end
+            error = [error ; norm((gps(:,j)-gps(:,1))-new_state_estimate(1:3,1))];
+            last_gps_idx = j+1;
+            break;
         end
-        
-        
+
         % Update next scan
         next_lidar_scan_index = next_lidar_scan_index + 1;
         
