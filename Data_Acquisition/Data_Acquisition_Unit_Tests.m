@@ -2,6 +2,7 @@
 date = "2014-06-25-16-22-15";
 get_ins(date);
 get_vo(date);
+get_gps(date);
 get_lidar(date,0);
 get_lidar(date,1);
 
