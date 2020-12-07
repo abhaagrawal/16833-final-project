@@ -13,17 +13,19 @@ zero_origin_time_doc = "time-zero_origin.csv";
 zero_origin_time_scaled_doc = "time-zero_origin_scaled.csv";
 time_path = strcat(data_dir,time_doc);
 coord_path = strcat(data_dir,coord_doc);
-time_scale = 1000000;
-% Call python script to zero origin the data
-system(strcat("python Pre_Processing/csv_zero_origin.py ",time_path,...
-    " -o ",zero_origin_time_doc));
-
-% Call python script to scale origin the data
-system(strcat("python Pre_Processing/csv_scale.py ",zero_origin_time_doc,...
-    " ",string(time_scale)," -o ",zero_origin_time_scaled_doc,...
-    " --div "));
-
-time = readmatrix(zero_origin_time_scaled_doc);
+% time_scale = 1000000;
+% % Call python script to zero origin the data
+% system(strcat("python Pre_Processing/csv_zero_origin.py ",time_path,...
+%     " -o ",zero_origin_time_doc));
+% 
+% % Call python script to scale origin the data
+% system(strcat("python Pre_Processing/csv_scale.py ",zero_origin_time_doc,...
+%     " ",string(time_scale)," -o ",zero_origin_time_scaled_doc,...
+%     " --div "));
+% 
+% time = readmatrix(zero_origin_time_scaled_doc);
 ins = readmatrix(coord_path)';
+time_scale = 1;
+time = readmatrix(time_path);
 end
 

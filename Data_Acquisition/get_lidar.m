@@ -1,8 +1,10 @@
-function [scans] = get_lidar(date,use_raw)
+function [scans,time] = get_lidar(date,use_raw)
 % GET_LIDAR Returns the lidar data
+%       [scans,time] = get_lidar(date,use_raw)
 %       Points is of type cell
 %       Points has dimension num_scans x 1
 %       Each entry in points is a pointcloud
+%       Time is num_scans x 1
 assert(nargin >= 1, "Please provide a date")
 if nargin < 2
     use_raw = false;
@@ -14,9 +16,11 @@ if use_raw
 else
     xyz_doc = sprintf("%s_icp.csv",date);
 end
+time_doc = sprintf("%s_timestamps.csv",date);
 pts_per_time_doc = sprintf("%s_points_per_timestep.csv",date);
 
 xyz_path = strcat(data_dir,xyz_doc);
+time_path = strcat(data_dir,time_doc);
 pts_per_time_path = strcat(data_dir,pts_per_time_doc);
 
 xyz = readmatrix(xyz_path);
@@ -36,4 +40,5 @@ for i = 1:num_scans
     cur_index = next_index;
 end
 
+time = readmatrix(time_path);
 end

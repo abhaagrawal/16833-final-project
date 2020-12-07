@@ -1,11 +1,123 @@
+%%
+vo_freq = 16;
+lidar_freq = 12.5;
+ins_freq = 50;
+milli = 1000000;
+merge_step_size = 0.5; %m
+alpha = 0.98; % 1 == vo, 0 == lidar
+close all
 %% Grab Data
-date = "2014-06-25-16-22-15";
-[vo,vo_time,scale] = get_vo(date);
-scans = get_lidar(date,1);
+if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
+    fprintf("Loading Data... ")
+    date = "2014-06-25-16-22-15";
+    [vo,vo_time,scale] = get_vo(date);
+    [scans,lidar_time] = get_lidar(date,1);
+    [ins,ins_time] = get_ins(date);
+    [first_time,first_ind] = ...
+        min([vo_time(1),lidar_time(1),vo_time(1)]);
+    [last_time,last_ind] = ...
+        max([vo_time(end),lidar_time(end),vo_time(end)]);
+    
+    vo_time_s = (vo_time-first_time)/milli;
+    lidar_time_s = (lidar_time-first_time)/milli;
+    ins_time_s = (ins_time-first_time)/milli;
+    DATA_IS_LOADED = 1;
+    fprintf("Done!\n")
+end
 
 %% Calculate Vo State
 vo(:,4:6) = vo(:,4:6)/scale; % Remove scaling from rotation values
-state = odometryToState(zeros(6,1),vo);
-vo_state(1:3,:) = state(1:3,:)/scale; % Remove scaling from translation values
+vo_state = odometryToState(zeros(6,1),vo);
+vo_state(1:3,:) = vo_state(1:3,:)/scale; % Remove scaling from translation values
+%% ??????
 
-num_scans = size(scans,1);
+% How close lidar and vo need to be to count as same time
+vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq));
+
+next_lidar_scan_index = 1;
+global_pointcloud = [];
+
+% Lidar starts before vo, bypass early measuremnts
+while lidar_time_s(next_lidar_scan_index) < vo_time_s(1)
+    next_lidar_scan_index = next_lidar_scan_index + 1;
+end
+initial_lidar_scan_index = next_lidar_scan_index;
+
+% Keep track of state since vo and lidar last aligned
+state_at_last_sync = [];
+
+% Loop through each vo state
+for i = 1:size(vo_state,2)
+    abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index));
+    
+    % If vo_time in s is close to next lidar scan
+    if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index))...
+            < vo_lidar_time_epsilon    
+        
+        % IF first time set global point cloud to new scan
+        if next_lidar_scan_index == initial_lidar_scan_index
+            % Calculate transform to global frame for lidar scan from vo
+            R = eul2rotm(vo_state(4:6,i)');
+            T = vo_state(1:3,i);
+            aff = eye(4);
+            aff(1:3,1:3) = R;
+            aff(4,1:3) = T;
+            vo_aff3d = affine3d(aff);    
+            % Transform lidar scan to global frame
+            state_at_last_sync = vo_state(:,i);
+            new_points_global = ...
+                pctransform(scans{next_lidar_scan_index},vo_aff3d);
+            global_pointcloud = new_points_global;
+        else
+        % Else merge into global pointcloud
+            % COMPLEMENTARY FILTER
+            % Get transform from lidar
+            % Get diff in state from last sync via vo
+            vo_state_diff = state_at_last_sync - vo_state(:,i);
+            
+            % Get diff in state from last sync via lidar
+            rig3d = ...
+                pcregistericp(global_pointcloud,...
+                    scans{next_lidar_scan_index});
+            lidar_state_diff = ...
+                [rig3d.Translation rotm2eul(rig3d.Rotation)];
+            
+            % Apply filter
+            comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
+            
+            % Predict our new state
+            new_state_estimate = ...
+                prediction_step(state_at_last_sync,[],comp);
+            
+            % Create affine3d transformation
+            R = eul2rotm(new_state_estimate(4:6,1)');
+            T = new_state_estimate(1:3,1);
+            aff = eye(4);
+            aff(1:3,1:3) = R;
+            aff(4,1:3) = T;
+            comp_aff3d = affine3d(aff);    
+            
+            % Trasnform scan to global coords
+            new_points_global = ...
+                pctransform(scans{next_lidar_scan_index},vo_aff3d);
+            
+            % Update global pointcloud
+            global_pointcloud = ...
+                 pcmerge(global_pointcloud,new_points_global,merge_step_size);
+             
+            % Update last
+            state_at_last_sync = new_state_estimate;
+        end
+        
+        % Update next scan
+        next_lidar_scan_index = next_lidar_scan_index + 1
+        
+        % If there are not more scans then break
+        if next_lidar_scan_index > size(scans,1)
+            break
+        end
+    end
+end
+pcshow(global_pointcloud)
+
+
