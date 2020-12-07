@@ -51,18 +51,26 @@ initial_lidar_scan_index = next_lidar_scan_index;
 % Keep track of state since vo and lidar last aligned
 state_at_last_sync = [];
 vo_index_at_last_sync = [];
+state_at_each_timestep = [];
 error = [];
+lidar_state = [];
 last_gps_idx = 1;
+nan_flag = 0;
 
 disp(vo_state(:,end))
 % Loop through each vo state
 for i = 1:size(vo_state,2)
 %for i = 1:2
-    abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index));
+    
+    if next_lidar_scan_index > size(scans,1)
+        new_state_estimate = vo_state(:,i);
+        state_at_each_timestep = [state_at_each_timestep,new_state_estimate];
+        state_at_last_sync = new_state_estimate;
+        continue;
+    end
     
     % If vo_time in s is close to next lidar scan
-    if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index))...
-            < vo_lidar_time_epsilon    
+    if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon    
         
         % IF first time set global point cloud to new scan
         if next_lidar_scan_index == initial_lidar_scan_index
@@ -90,19 +98,17 @@ for i = 1:size(vo_state,2)
 
         %vo_state_diff = state_at_last_sync - vo_state(:,i);
         vo_state_diff = vo_state(:,i) - state_at_last_sync ;
-%         vo_state_diff = zeros(6,1);
-%         for j = vo_index_at_last_sync:i-1
-%             vo_state_diff = prediction_step(vo_state_diff,[],...
-%                 vo(j,:)');
-%         end
+%          vo_state_diff = zeros(6,1);
+%          for j = vo_index_at_last_sync:i-1
+%              vo_state_diff = prediction_step(vo_state_diff,[],...
+%                  vo(j,:)');
+%          end
 
         % Get diff in state from last sync via lidar
-        rig3d = ...
-            pcregistericp(global_pointcloud,...
-                scans{next_lidar_scan_index});
-        lidar_state_diff = ...
-            [rig3d.Translation rotm2eul(rig3d.Rotation)]';
-
+        rig3d = pcregistericp(global_pointcloud, scans{next_lidar_scan_index});
+        lidar_state_diff = [rig3d.Translation rotm2eul(rig3d.Rotation)]';
+        
+        lidar_state = [lidar_state,lidar_state_diff];
 
         % Apply filter
         comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
@@ -129,19 +135,12 @@ for i = 1:size(vo_state,2)
 
         % Update last
         state_at_last_sync = new_state_estimate;
-
+        state_at_each_timestep = [state_at_each_timestep ,new_state_estimate];
+        
         % Compare with GPS data
-        for j = last_gps_idx:size(ins_time,1)
+        for j = last_gps_idx:size(gps_time,1)
             %disp(gps_time(j) - vo_time(j))
-            if ((ins_time_s(j) - vo_time_s(i)) < ins_lidar_time_epsilon)
-                if (j>100)
-                    disp(j)
-                    disp(ins_time_s(j))
-                    %disp(vo_time(j))
-                    disp(ins(:,j))
-                    disp(ins(:,1))
-                    disp(new_state_estimate)
-                end
+            if (abs(gps_time_s(j) - vo_time_s(i)) < gps_lidar_time_epsilon)
                 %error = [error ; norm((ins(1:3,j)-ins(1:3,1))-new_state_estimate(1:3,1))];
                 error = [error ; norm((gps(1:3,j)-gps(1:3,1))-new_state_estimate(1:3,1))];
                 last_gps_idx = j+1;
@@ -153,9 +152,9 @@ for i = 1:size(vo_state,2)
         next_lidar_scan_index = next_lidar_scan_index + 1;
         
         % If there are not more scans then break
-        if next_lidar_scan_index > size(scans,1)
-            break
-        end
+%         if next_lidar_scan_index > size(scans,1)
+%             break
+%         end
     end
 end
 

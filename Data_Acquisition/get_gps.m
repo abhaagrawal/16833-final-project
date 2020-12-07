@@ -30,6 +30,7 @@ time_scale = 1000000;
 
 % time = readmatrix(zero_origin_time_scaled_doc);
 gps = readmatrix(coord_path)';
+
 time_scale = 1;
 time = readmatrix(time_path);
 end
