@@ -4,8 +4,8 @@ lidar_freq = 12.5;
 ins_freq = 50;
 gps_freq = 5;
 milli = 1000000;
-merge_step_size = 0.5; %m
-alpha = 0.98; % 1 == vo, 0 == lidar
+merge_step_size = 0.2;%0.5; %m
+alpha = 0.984; % 1 == vo, 0 == lidar
 close all
 %% Grab Data
 if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
@@ -28,6 +28,7 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     fprintf("Done!\n")
     
     vo(:,4:6) = vo(:,4:6)/scale; % Remove scaling from rotation values
+    %vo_state = odometryToState([0,0,0,0,0,-pi/2]',vo);
     vo_state = odometryToState(zeros(6,1),vo);
     vo_state(1:3,:) = vo_state(1:3,:)/scale; % Remove scaling from translation values
     vo(:,1:3) = vo(:,1:3)/scale;
@@ -35,9 +36,9 @@ end
 %% ??????
 
 % How close lidar and vo need to be to count as same time
-vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq))
+vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq));
 gps_lidar_time_epsilon = 2*abs((1/gps_freq) - (1/lidar_freq));
-ins_lidar_time_epsilon = 2*abs((1/ins_freq) - (1/lidar_freq))
+ins_lidar_time_epsilon = 2*abs((1/ins_freq) - (1/lidar_freq));
 
 next_lidar_scan_index = 1;
 global_pointcloud = [];
@@ -57,21 +58,31 @@ lidar_state = [];
 last_gps_idx = 1;
 nan_flag = 0;
 
-disp(vo_state(:,end))
+%disp(vo_state(:,end))
 % Loop through each vo state
-for i = 1:size(vo_state,2)
+for i = 1:size(vo_state,2)-1
 %for i = 1:2
     
     if next_lidar_scan_index > size(scans,1)
-        new_state_estimate = vo_state(:,i);
+        new_state_estimate = state_at_last_sync + vo_state(:,i) - vo_state(:,i-1);
+        %prediction_step(state_at_last_sync,[],vo_stat);
         state_at_each_timestep = [state_at_each_timestep,new_state_estimate];
         state_at_last_sync = new_state_estimate;
+%         for j = last_gps_idx:size(gps_time,1)
+%             %disp(gps_time(j) - vo_time(j))
+%             if (abs(gps_time_s(j) - vo_time_s(i)) < gps_lidar_time_epsilon)
+%                 error = [error ; norm((ins(1:3,j)-ins(1:3,1))-new_state_estimate(1:3,1))];
+%                 %error = [error ; norm((gps(1:3,j)-gps(1:3,1))-new_state_estimate(1:3,1))];
+%                 last_gps_idx = j+1;
+%                 break;
+%             end
+%         end
         continue;
     end
     
     % If vo_time in s is close to next lidar scan
     if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon    
-        
+        vo_index_at_last_sync = i;
         % IF first time set global point cloud to new scan
         if next_lidar_scan_index == initial_lidar_scan_index
             % Calculate transform to global frame for lidar scan from vo
@@ -82,8 +93,8 @@ for i = 1:size(vo_state,2)
             aff(4,1:3) = T;
             vo_aff3d = affine3d(aff);    
             % Transform lidar scan to global frame
-            state_at_last_sync = vo_state(:,i);
-            vo_index_at_last_sync = i;
+            state_at_last_sync = vo_state(:,i);% + [0,0,0,0,0,-pi/2]'
+            
             new_points_global = ...
                 pctransform(scans{next_lidar_scan_index},vo_aff3d);
             global_pointcloud = new_points_global;
@@ -97,7 +108,7 @@ for i = 1:size(vo_state,2)
         % Get diff in state from last sync via vo
 
         %vo_state_diff = state_at_last_sync - vo_state(:,i);
-        vo_state_diff = vo_state(:,i) - state_at_last_sync ;
+        vo_state_diff = vo_state(:,i) - vo_state(:,vo_index_at_last_sync) ;
 %          vo_state_diff = zeros(6,1);
 %          for j = vo_index_at_last_sync:i-1
 %              vo_state_diff = prediction_step(vo_state_diff,[],...
@@ -160,5 +171,5 @@ end
 
 pcshow(global_pointcloud)
 disp(error)
-
+visualize_two_state(ins, state_at_each_timestep,"error");
 

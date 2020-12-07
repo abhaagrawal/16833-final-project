@@ -26,7 +26,7 @@ min_dim = min(state2(1:3,:),[],'all');
 %xlim([min_dim max_dim])
 %ylim([min_dim max_dim])
 %zlim([min_dim max_dim])
-close all
+%close all
 fig_3d = figure;
 hold on;
 plot3(state1(1,:),state1(2,:),state1(3,:));
@@ -35,7 +35,8 @@ plot3(state1(1,1),state1(2,1),state1(3,1),'go');
 plot3(state1(1,end),state1(2,end),state1(3,end),'ro');
 plot3(state2(1,1),state2(2,1),state2(3,1),'go');
 plot3(state2(1,end),state2(2,end),state2(3,end),'ro');
-legend("Path1", "Path2","Start","Finish")
+lgd = legend("Ground Truth", "Complementary Filter","Start","Finish")
+lgd.FontSize = 14;
 hold off
 xlabel("X (m)")
 ylabel("Y (m)")
