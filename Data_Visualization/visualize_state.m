@@ -1,7 +1,7 @@
 function visualize_state(state,name)
 %visualize_state Creates plots of a state vector
 %   State is in [tx ty tz rx ry rz]'
-%   State is 6 x num_odom+1
+%   State is 6 x num_state
 
 max_dim = max(state(1:3,:),[],'all');
 min_dim = min(state(1:3,:),[],'all');
