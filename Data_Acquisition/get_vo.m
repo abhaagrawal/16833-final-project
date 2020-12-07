@@ -21,22 +21,25 @@ vo_scale = 10000;
 
 coord_path = strcat(data_dir,coord_doc);
 time_path = strcat(data_dir,time_doc);
+scaled_coord_path = strcat(data_dir,scaled_coord_doc);
+zero_origin_time_path = strcat(data_dir,zero_origin_time_doc);
+zero_origin_time_scaled_path = strcat(data_dir,zero_origin_time_scaled_doc);
 % Call python script to scale the data
 system(strcat("python Pre_Processing/csv_scale.py ",coord_path,...
-    " ",string(vo_scale)," -o ",scaled_coord_doc));
+    " ",string(vo_scale)," -o ",scaled_coord_path));
 
-% time_scale = 1000000;
-% % Call python script to zero origin the data
-% system(strcat("python Pre_Processing/csv_zero_origin.py ",time_path,...
-%     " -o ",zero_origin_time_doc));
-% 
-% % Call python script to scale origin the data
-% system(strcat("python Pre_Processing/csv_scale.py ",zero_origin_time_doc,...
-%     " ",string(time_scale)," -o ",zero_origin_time_scaled_doc,...
-%     " --div "));
+time_scale = 1000000;
+% Call python script to zero origin the data
+%assert(system(strcat("python Pre_Processing/csv_zero_origin.py ",time_path,...
+%    " -o ",zero_origin_time_path)) == 0);
+
+% Call python script to scale origin the data
+%assert(system(strcat("python Pre_Processing/csv_scale.py ",zero_origin_time_path,...
+%    " ",string(time_scale)," -o ",zero_origin_time_scaled_path,...
+%    " --div ")) == 0);
 % time = readmatrix(zero_origin_time_scaled_doc);
 
-vo = readmatrix(scaled_coord_doc);
+vo = readmatrix(scaled_coord_path);
 time = readmatrix(time_path);
 
 end

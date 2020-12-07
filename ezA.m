@@ -79,76 +79,78 @@ for i = 1:size(vo_state,2)
             new_points_global = ...
                 pctransform(scans{next_lidar_scan_index},vo_aff3d);
             global_pointcloud = new_points_global;
-        else
-        % Else merge into global pointcloud
-            % COMPLEMENTARY FILTER
-            % Get transform from lidar
-            % Get diff in state from last sync via vo
+            next_lidar_scan_index = next_lidar_scan_index + 1;
+            continue
+        end
+    % Else merge into global pointcloud
 
-            %vo_state_diff = state_at_last_sync - vo_state(:,i);
-            vo_state_diff = vo_state(:,i) - state_at_last_sync ;
-            %vo_state_diff = zeros(6,1);
-            %for j = vo_index_at_last_sync:i-1
-            %    vo_state_diff = prediction_step(vo_state_diff,[],...
-            %        vo(j,:)');
-            %end
+        % COMPLEMENTARY FILTER
+        % Get transform from lidar
+        % Get diff in state from last sync via vo
 
-            % Get diff in state from last sync via lidar
-            rig3d = ...
-                pcregistericp(global_pointcloud,...
-                    scans{next_lidar_scan_index});
-            lidar_state_diff = ...
-                [rig3d.Translation rotm2eul(rig3d.Rotation)]';
+        %vo_state_diff = state_at_last_sync - vo_state(:,i);
+        vo_state_diff = vo_state(:,i) - state_at_last_sync ;
+%         vo_state_diff = zeros(6,1);
+%         for j = vo_index_at_last_sync:i-1
+%             vo_state_diff = prediction_step(vo_state_diff,[],...
+%                 vo(j,:)');
+%         end
 
-            
-            % Apply filter
-            comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
-            
-            % Predict our new state
-            new_state_estimate = ...
-                prediction_step(state_at_last_sync,[],comp);
-            
-            % Create affine3d transformation
-            R = eul2rotm(new_state_estimate(4:6,1)');
-            T = new_state_estimate(1:3,1);
-            aff = eye(4);
-            aff(1:3,1:3) = R;
-            aff(4,1:3) = T;
-            comp_aff3d = affine3d(aff);    
-            
-            % Trasnform scan to global coords
-            new_points_global = ...
-                pctransform(scans{next_lidar_scan_index},vo_aff3d);
-            
-            % Update global pointcloud
-            global_pointcloud = ...
-                 pcmerge(global_pointcloud,new_points_global,merge_step_size);
-             
-            % Update last
-            state_at_last_sync = new_state_estimate;
-            
-            % Compare with GPS data
-            for j = last_gps_idx:size(ins_time,1)
-                %disp(gps_time(j) - vo_time(j))
-                if ((ins_time_s(j) - vo_time_s(i)) < ins_lidar_time_epsilon)
-                    if (j>100)
-                        disp(j)
-                        disp(ins_time_s(j))
-                        %disp(vo_time(j))
-                        disp(ins(:,j))
-                        disp(ins(:,1))
-                        disp(new_state_estimate)
-                    end
-                    %error = [error ; norm((ins(1:3,j)-ins(1:3,1))-new_state_estimate(1:3,1))];
-                    error = [error ; norm((gps(1:3,j)-gps(1:3,1))-new_state_estimate(1:3,1))];
-                    last_gps_idx = j+1;
-                    break;
+        % Get diff in state from last sync via lidar
+        rig3d = ...
+            pcregistericp(global_pointcloud,...
+                scans{next_lidar_scan_index});
+        lidar_state_diff = ...
+            [rig3d.Translation rotm2eul(rig3d.Rotation)]';
+
+
+        % Apply filter
+        comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
+
+        % Predict our new state
+        new_state_estimate = ...
+            prediction_step(state_at_last_sync,[],comp);
+
+        % Create affine3d transformation
+        R = eul2rotm(new_state_estimate(4:6,1)');
+        T = new_state_estimate(1:3,1);
+        aff = eye(4);
+        aff(1:3,1:3) = R;
+        aff(4,1:3) = T;
+        comp_aff3d = affine3d(aff);    
+
+        % Trasnform scan to global coords
+        new_points_global = ...
+            pctransform(scans{next_lidar_scan_index},vo_aff3d);
+
+        % Update global pointcloud
+        global_pointcloud = ...
+             pcmerge(global_pointcloud,new_points_global,merge_step_size);
+
+        % Update last
+        state_at_last_sync = new_state_estimate;
+
+        % Compare with GPS data
+        for j = last_gps_idx:size(ins_time,1)
+            %disp(gps_time(j) - vo_time(j))
+            if ((ins_time_s(j) - vo_time_s(i)) < ins_lidar_time_epsilon)
+                if (j>100)
+                    disp(j)
+                    disp(ins_time_s(j))
+                    %disp(vo_time(j))
+                    disp(ins(:,j))
+                    disp(ins(:,1))
+                    disp(new_state_estimate)
                 end
+                %error = [error ; norm((ins(1:3,j)-ins(1:3,1))-new_state_estimate(1:3,1))];
+                error = [error ; norm((gps(1:3,j)-gps(1:3,1))-new_state_estimate(1:3,1))];
+                last_gps_idx = j+1;
+                break;
             end
         end
-        
+
         % Update next scan
-        next_lidar_scan_index = next_lidar_scan_index + 1
+        next_lidar_scan_index = next_lidar_scan_index + 1;
         
         % If there are not more scans then break
         if next_lidar_scan_index > size(scans,1)
