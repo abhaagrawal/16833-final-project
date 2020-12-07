@@ -2,6 +2,7 @@
 vo_freq = 16;
 lidar_freq = 12.5;
 ins_freq = 50;
+gps_freq = 5;
 milli = 1000000;
 merge_step_size = 0.5; %m
 alpha = 0.98; % 1 == vo, 0 == lidar
@@ -13,6 +14,7 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     [vo,vo_time,scale] = get_vo(date);
     [scans,lidar_time] = get_lidar(date,1);
     [ins,ins_time] = get_ins(date);
+    [gps, gps_time] = get_gps(date);
     [first_time,first_ind] = ...
         min([vo_time(1),lidar_time(1),vo_time(1)]);
     [last_time,last_ind] = ...
@@ -21,6 +23,7 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     vo_time_s = (vo_time-first_time)/milli;
     lidar_time_s = (lidar_time-first_time)/milli;
     ins_time_s = (ins_time-first_time)/milli;
+    gps_time_s = (gps_time-first_time)/milli;
     DATA_IS_LOADED = 1;
     fprintf("Done!\n")
     
@@ -32,7 +35,8 @@ end
 %% ??????
 
 % How close lidar and vo need to be to count as same time
-vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq));
+vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq))
+gps_epsilon = 2*abs((1/gps_freq) - (1/lidar_freq))
 
 next_lidar_scan_index = 1;
 global_pointcloud = [];
@@ -46,8 +50,12 @@ initial_lidar_scan_index = next_lidar_scan_index;
 % Keep track of state since vo and lidar last aligned
 state_at_last_sync = [];
 vo_index_at_last_sync = [];
+error = [];
+last_gps_idx = 1;
+
 % Loop through each vo state
 for i = 1:size(vo_state,2)
+%for i = 1:2
     abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index));
     
     % If vo_time in s is close to next lidar scan
@@ -74,6 +82,7 @@ for i = 1:size(vo_state,2)
             % COMPLEMENTARY FILTER
             % Get transform from lidar
             % Get diff in state from last sync via vo
+
             %vo_state_diff = state_at_last_sync - vo_state(:,i);
             vo_state_diff = zeros(6,1);
             for j = vo_index_at_last_sync:i-1
@@ -86,6 +95,7 @@ for i = 1:size(vo_state,2)
                     scans{next_lidar_scan_index});
             lidar_state_diff = ...
                 [rig3d.Translation rotm2eul(rig3d.Rotation)]';
+
             
             % Apply filter
             comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
@@ -112,6 +122,24 @@ for i = 1:size(vo_state,2)
              
             % Update last
             state_at_last_sync = new_state_estimate;
+            
+            % Compare with GPS data
+            for j = last_gps_idx:size(gps_time,1)
+                %disp(gps_time(j) - vo_time(j))
+                if ((gps_time_s(j) - vo_time_s(i)) < gps_epsilon)
+                    if (j>100)
+                        disp(j)
+                        disp(gps_time_s(j))
+                        %disp(vo_time(j))
+                        disp(gps(:,j))
+                        disp(gps(:,1))
+                        disp(new_state_estimate)
+                    end
+                    error = [error ; norm((gps(:,j)-gps(:,1))-new_state_estimate(1:3,1))];
+                    last_gps_idx = j+1;
+                    break;
+                end
+            end
         end
         
         % Update next scan
@@ -125,5 +153,6 @@ for i = 1:size(vo_state,2)
 end
 
 pcshow(global_pointcloud)
+disp(error)
 
 
