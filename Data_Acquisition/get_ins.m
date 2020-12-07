@@ -6,7 +6,7 @@ function [ins,time,time_scale] = get_ins(date)
 %   time is num_states x 1
 assert(nargin == 1, "Please provide a date")
 %data_dir = "..\data\2015-11-13-10-28-08_gps\2015-11-13-10-28-08\gps\";
-data_dir = sprintf("..\\data\\%s_gps\\%s\\gps\\",date,date);
+data_dir = sprintf("Data\\%s\\",date);
 coord_doc = "ins-pose.csv";
 time_doc = "ins-time.csv";
 zero_origin_time_doc = "time-zero_origin.csv";
