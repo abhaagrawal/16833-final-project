@@ -13,8 +13,8 @@ else
 end
 coord_doc = "ins-pose.csv";
 time_doc = "ins-time.csv";
-zero_origin_time_doc = "time-zero_origin.csv";
-zero_origin_time_scaled_doc = "time-zero_origin_scaled.csv";
+zero_origin_time_doc = "Data/time-zero_origin.csv";
+zero_origin_time_scaled_doc = "Data/time-zero_origin_scaled.csv";
 time_path = strcat(data_dir,time_doc);
 coord_path = strcat(data_dir,coord_doc);
 % time_scale = 1000000;
