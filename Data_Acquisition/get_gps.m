@@ -1,4 +1,4 @@
-function [ins,time,time_scale] = get_ins(date)
+function [gps,time,time_scale] = get_gps(date)
 %GET_INS Get gps and inertial solution
 %   INS is absolute positions
 %   [ins,time] = get_ins()
@@ -8,10 +8,10 @@ assert(nargin == 1, "Please provide a date")
 %data_dir = "..\data\2015-11-13-10-28-08_gps\2015-11-13-10-28-08\gps\";
 %data_dir = sprintf("Data\\%s\\",date);
 data_dir = sprintf("Data/%s/",date);
-coord_doc = "ins-pose.csv";
-time_doc = "ins-time.csv";
-zero_origin_time_doc = "time-zero_origin.csv";
-zero_origin_time_scaled_doc = "time-zero_origin_scaled.csv";
+coord_doc = "gps-pose.csv";
+time_doc = "gps-time.csv";
+%zero_origin_time_doc = "time-zero_origin.csv";
+%zero_origin_time_scaled_doc = "time-zero_origin_scaled.csv";
 time_path = strcat(data_dir,time_doc);
 coord_path = strcat(data_dir,coord_doc);
 % time_scale = 1000000;
@@ -25,7 +25,7 @@ coord_path = strcat(data_dir,coord_doc);
 %     " --div "));
 % 
 % time = readmatrix(zero_origin_time_scaled_doc);
-ins = readmatrix(coord_path)';
+gps = readmatrix(coord_path)';
 time_scale = 1;
 time = readmatrix(time_path);
 end

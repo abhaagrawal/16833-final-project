@@ -10,7 +10,8 @@ if nargin < 2
     use_raw = false;
 end
 
-data_dir = sprintf("Data\\%s\\",date);
+%data_dir = sprintf("Data\\%s\\",date);
+data_dir = sprintf("Data/%s/",date);
 if use_raw
     xyz_doc = "lidar.csv";
 else
