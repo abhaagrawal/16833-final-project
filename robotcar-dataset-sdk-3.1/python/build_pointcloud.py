@@ -48,14 +48,26 @@ def build_pointcloud(lidar_dir, poses_file, extrinsics_dir, start_time, end_time
 
     lidar = re.search('(lms_front|lms_rear|ldmrs|velodyne_left|velodyne_right)', lidar_dir).group(0)
     timestamps_path = os.path.join(lidar_dir, os.pardir, lidar + '.timestamps')
-
+    lidar_path = os.path.join(lidar_dir + "/")#, os.pardir, lidar + '/')
+    print(lidar_path)
+    file_arr = os.listdir(lidar_path)
+    #print(file_arr)
     timestamps = []
-    with open(timestamps_path) as timestamps_file:
-        for line in timestamps_file:
-            timestamp = int(line.split(' ')[0])
-            if start_time <= timestamp <= end_time:
-                timestamps.append(timestamp)
-
+    # with open(timestamps_path) as timestamps_file:
+    #     for line in timestamps_file:
+    #         timestamp = int(line.split(' ')[0])
+    #         #print(timestamp)
+    #         if start_time <= timestamp <= end_time:
+    #             timestamps.append(timestamp)
+    # timestamps.append(start_time + 2e7)
+    for i in range(0, len(file_arr), 1):
+        file_name = file_arr[i]
+        timestamp = int(file_name.split(".")[0])
+        timestamps.append(timestamp)
+    #print(timestamps)
+    timestamps.sort() 
+    print(len(timestamps))
+    savetxt('2015-11-13-10-28-08_8_timestamp.csv', timestamps, delimiter='\n')
     if len(timestamps) == 0:
         raise ValueError("No LIDAR data in the given time bracket.")
     print(len(timestamps))
@@ -85,6 +97,7 @@ def build_pointcloud(lidar_dir, poses_file, extrinsics_dir, start_time, end_time
     print(len(poses))
     x=30
     for i in range(len(poses)):
+        #print(i)
         scan_path = os.path.join(lidar_dir, str(timestamps[i]) + '.bin')
         if "velodyne" not in lidar:
             if not os.path.isfile(scan_path):
@@ -124,7 +137,7 @@ def build_pointcloud(lidar_dir, poses_file, extrinsics_dir, start_time, end_time
 
     print(pointcloud.shape)
     print(points_per_timestep)
-    return pointcloud, reflectance, points_per_timestep
+    return pointcloud, reflectance, points_per_timestep, timestamps
 
 
 if __name__ == "__main__":
@@ -144,14 +157,16 @@ if __name__ == "__main__":
     with open(timestamps_path) as timestamps_file:
         start_time = int(next(timestamps_file).split(' ')[0])
 
-
+    print("start", start_time)
     end_time = start_time + 2e7
 
 
-    pointcloud, reflectance, points_per_timestep = build_pointcloud(args.laser_dir, args.poses_file,
+    pointcloud, reflectance, points_per_timestep, timestamps = build_pointcloud(args.laser_dir, args.poses_file,
                                                args.extrinsics_dir, start_time, end_time)
     print(pointcloud.shape)
-    savetxt('2014-05-06-12-54-54.csv', pointcloud, delimiter=',')
+    savetxt('2015-11-13-10-28-08_8.csv', pointcloud.transpose(), delimiter=',')
+    
+    savetxt('2015-11-13-10-28-08_8_points_per_timestep.csv', points_per_timestep, delimiter=',')
     if reflectance is not None:
         colours = (reflectance - reflectance.min()) / (reflectance.max() - reflectance.min())
         colours = 1 / (1 + np.exp(-10 * (colours - colours.mean())))

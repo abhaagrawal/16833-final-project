@@ -96,7 +96,7 @@ def interpolate_ins_poses(ins_path, pose_timestamps, origin_timestamp, use_rtk=F
 
     ins_timestamps = ins_timestamps[1:]
     abs_poses = abs_poses[1:]
-
+    print("abs poses", len(abs_poses))
     return interpolate_poses(ins_timestamps, abs_poses, pose_timestamps, origin_timestamp)
 
 
