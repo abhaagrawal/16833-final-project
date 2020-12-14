@@ -11,8 +11,8 @@ close all
 %% Grab Data
 if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     fprintf("Loading Data... ")
-    date = "2014-06-25-16-22-15";
-    %date = "2015-11-13-10-28-08";
+    %date = "2014-06-25-16-22-15";
+    date = "2015-11-13-10-28-08";
     [vo,vo_time,scale] = get_vo(date);
     [scans,lidar_time] = get_lidar(date,1);
     [ins,ins_time] = get_ins(date);
@@ -63,7 +63,9 @@ nan_flag = 0;
 % Loop through each vo state
 for i = 1:size(vo_state,2)-1
 %for i = 1:2
-    
+    if (mod(i,100) == 0)
+        fprintf("Iteration %d/%d",i,size(vo_state,2)-1)
+    end
     %%%% If there are no more lidar scans
     if next_lidar_scan_index > size(scans,1)
         new_state_estimate = state_at_last_sync + vo_state(:,i) - vo_state(:,i-1);
