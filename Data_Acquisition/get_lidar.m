@@ -29,8 +29,11 @@ pts_per_time_path = strcat(data_dir,pts_per_time_doc);
 
 xyz = readmatrix(xyz_path);
 if use_raw
-    xyz = xyz';
+    if size(xyz,1)<size(xyz,2)
+        xyz = xyz';
+    end
     xyz = xyz(:,1:3);
+    assert(size(xyz,1)>size(xyz,2),"Expect each row to be an entry");
 end
 pts_per_time = readmatrix(pts_per_time_path);
 num_scans = numel(pts_per_time);
@@ -45,4 +48,10 @@ for i = 1:num_scans
 end
 
 time = readmatrix(time_path);
+
+% Tere is an error in the first scan
+if eq(date,"2015-11-13-10-28-08")
+time = time(2:end);
+scans = scans(2:end,1);
+end
 end
