@@ -73,19 +73,20 @@ for i = 1:size(vo_state,2)-1
     end
     
     % If vo_time in s is close to next lidar scan
-    if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon    
+    if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon 
+        vo_index_at_last_sync = i;
         % IF first time set global point cloud to new scan
         if next_lidar_scan_index == initial_lidar_scan_index
             % Calculate transform to global frame for lidar scan from vo
-            [vo_aff3d] = stateToAffine3d(vo_state(:,i))
-            % Transform lidar scan to global frame
+            [vo_aff3d] = stateToAffine3d(vo_state(:,i));
             state_at_last_sync = vo_state(:,i);% + [0,0,0,0,0,-pi/2]'
             
+            % Transform lidar scan to global frame
             new_points_global = ...
                 pctransform(scans{next_lidar_scan_index},vo_aff3d);
             global_pointcloud = new_points_global;
             next_lidar_scan_index = next_lidar_scan_index + 1;
-            vo_index_at_last_sync = i;
+            %vo_index_at_last_sync = i;
             continue
         end
         % Else merge into global pointcloud
@@ -104,16 +105,20 @@ for i = 1:size(vo_state,2)-1
         
         % Apply filter
         comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
-        comp(5) = 0; % No pitching!!!!!!!!!!!!
+
         % Predict our new state
         new_state_estimate = ...
             prediction_step(state_at_last_sync,[],comp);
 
         % Create affine3d transformation   
         [comp_aff3d] = stateToAffine3d(new_state_estimate(:,1));
+        
         % Trasnform scan to global coords
+%         new_points_global = ...
+%             pctransform(scans{next_lidar_scan_index},comp_aff3d); % <-- iz broken
+        [vo_aff3d] = stateToAffine3d(vo_state(:,i));
         new_points_global = ...
-            pctransform(scans{next_lidar_scan_index},comp_aff3d);
+            pctransform(scans{next_lidar_scan_index},vo_aff3d);
 
         % Update global pointcloud
         global_pointcloud = ...
@@ -121,7 +126,7 @@ for i = 1:size(vo_state,2)-1
 
         % Update last
         state_at_last_sync = new_state_estimate;
-        vo_index_at_last_sync = i;
+        %vo_index_at_last_sync = i;
         state_at_each_timestep = [state_at_each_timestep new_state_estimate];
         
         % Compare with GPS data
