@@ -17,7 +17,8 @@ time_doc = "vo-time.csv";
 scaled_coord_doc = "vo-coord-scaled.csv";
 zero_origin_time_doc = "vo-time-zero-origin.csv";
 zero_origin_time_scaled_doc = "vo-time-zero-origin-scaled.csv";
-vo_scale = 10000;
+ vo_scale = 10000;
+%vo_scale = 1;
 
 coord_path = strcat(data_dir,coord_doc);
 time_path = strcat(data_dir,time_doc);
