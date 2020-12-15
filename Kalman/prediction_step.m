@@ -7,8 +7,8 @@ pos = state(1:3,1);
 state_rotx = state(4,1);
 state_roty = state(5,1);
 state_rotz = state(6,1);
-rot = eular_xyz(state_rotx,state_roty,state_rotz);
-
+%rot = eular_xyz(state_rotx,state_roty,state_rotz);
+rot = eul2rotm(state(4:6,1)',"XYZ");
 % State update from measurement
 delta_pos = meas(1:3,1);
 delta_rotx = meas(4,1);

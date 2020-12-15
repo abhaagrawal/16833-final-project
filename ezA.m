@@ -33,6 +33,7 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     %vo_state = odometryToState([0,0,0,0,0,-pi/2]',vo);
     vo_state = odometryToState(zeros(6,1),vo');
     vo_state(1:3,:) = vo_state(1:3,:)/scale; % Remove scaling from translation values
+    vo_state(3:5,:) = 0;
     vo(:,1:3) = vo(:,1:3)/scale;
 end
 %% ??????
@@ -66,6 +67,7 @@ for i = 1:size(vo_state,2)-1
     if (mod(i,100) == 0)
         fprintf("VO Iteration %d/%d\n",i,size(vo_state,2)-1);
     end
+    
     %%%% If there are no more lidar scans
     if next_lidar_scan_index > size(scans,1)
         new_state_estimate = state_at_last_sync + vo_state(:,i) - vo_state(:,i-1);
@@ -76,20 +78,24 @@ for i = 1:size(vo_state,2)-1
     
     % If vo_time in s is close to next lidar scan
     abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index))
+    if i - vo_index_at_last_sync > 5
+        epsilon_delta_kappa = 3;
+    end
     if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon 
-        vo_index_at_last_sync = i;
+        
         % IF first time set global point cloud to new scan
         if next_lidar_scan_index == initial_lidar_scan_index
             % Calculate transform to global frame for lidar scan from vo
             [vo_aff3d] = stateToAffine3d(vo_state(:,i));
             state_at_last_sync = vo_state(:,i);% + [0,0,0,0,0,-pi/2]'
+            vo_index_at_last_sync = i;
             
             % Transform lidar scan to global frame
             new_points_global = ...
                 pctransform(scans{next_lidar_scan_index},vo_aff3d);
             global_pointcloud = new_points_global;
             next_lidar_scan_index = next_lidar_scan_index + 1;
-            %vo_index_at_last_sync = i;
+            
             continue
         end
         % Else merge into global pointcloud
@@ -103,8 +109,8 @@ for i = 1:size(vo_state,2)-1
         % vo_state_diff = vo_state(:,i) - state_at_last_sync;
 
         % Get diff in state from last sync via lidar
-        rig3d = pcregistericp(global_pointcloud, scans{next_lidar_scan_index});
-        lidar_state_diff = [rig3d.Translation rotm2eul(rig3d.Rotation)]';
+        rig3d = pcregistericp(scans{next_lidar_scan_index}, global_pointcloud);
+        lidar_state_diff = [rig3d.Translation.*[1 1 0] rotm2eul(rig3d.Rotation).*[0 0 1]]';
         
         % Apply filter
         comp = alpha*vo_state_diff + (1-alpha)*lidar_state_diff;
@@ -117,11 +123,11 @@ for i = 1:size(vo_state,2)-1
         [comp_aff3d] = stateToAffine3d(new_state_estimate(:,1));
         
         % Trasnform scan to global coords
-%         new_points_global = ...
-%             pctransform(scans{next_lidar_scan_index},comp_aff3d); % <-- iz broken
-        %[vo_aff3d] = stateToAffine3d(vo_state(:,i));
         new_points_global = ...
-            pctransform(scans{next_lidar_scan_index},vo_aff3d);
+            pctransform(scans{next_lidar_scan_index},comp_aff3d); % <-- iz broken
+        %[vo_aff3d] = stateToAffine3d(vo_state(:,i));
+%         new_points_global = ...
+%             pctransform(scans{next_lidar_scan_index},vo_aff3d);
 
         % Update global pointcloud
         global_pointcloud = ...
@@ -129,7 +135,7 @@ for i = 1:size(vo_state,2)-1
 
         % Update last
         state_at_last_sync = new_state_estimate;
-        %vo_index_at_last_sync = i;
+        vo_index_at_last_sync = i;
         state_at_each_timestep = [state_at_each_timestep new_state_estimate];
         
         % Compare with GPS data

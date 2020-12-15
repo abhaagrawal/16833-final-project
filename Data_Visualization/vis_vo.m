@@ -8,15 +8,15 @@ end
 %% Calculate
 vo(:,4:6) = vo(:,4:6)/scale; % Remove scaling from rotation values
 state = odometryToState(zeros(6,1),vo');
-pos = state(1:3,:)/scale; % Remove scaling from translation values
-vo_state(1:3,:) = state(1:3,:)/scale;
-visualize_state(pos,"vo");
+vo_state = state(1:3,:)/scale; % Remove scaling from translation values
+%vo_state(1:3,:) = state(1:3,:)/scale;
+visualize_state(vo_state,"vo");
 %% Plot fancy
 if (0)
-max_dim = max(pos(1:3,:),[],'all');
-min_dim = min(pos(1:3,:),[],'all');
-for i = 1:size(pos,2)
-    plot3(pos(1,1:i),pos(2,1:i),pos(3,1:i))
+max_dim = max(vo_state(1:3,:),[],'all');
+min_dim = min(vo_state(1:3,:),[],'all');
+for i = 1:size(vo_state,2)
+    plot3(vo_state(1,1:i),vo_state(2,1:i),vo_state(3,1:i))
     grid on
     
     %xlim([min_dim max_dim])
