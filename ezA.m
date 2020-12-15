@@ -35,11 +35,16 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     vo_state(1:3,:) = vo_state(1:3,:)/scale; % Remove scaling from translation values
     vo_state(3:5,:) = 0;
     vo(:,1:3) = vo(:,1:3)/scale;
+    
+    [lidar_time_s,I] = sort(lidar_time_s);
+    scans = {scans{I}};
+    scans = scans';
 end
 %% ??????
 
 % How close lidar and vo need to be to count as same time
-vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq));
+%vo_lidar_time_epsilon = 4*abs((1/vo_freq) - (1/lidar_freq));
+vo_lidar_time_epsilon = 0.1;
 gps_lidar_time_epsilon = 2*abs((1/gps_freq) - (1/lidar_freq));
 ins_lidar_time_epsilon = 2*abs((1/ins_freq) - (1/lidar_freq));
 
@@ -77,11 +82,16 @@ for i = 1:size(vo_state,2)-1
     end
     
     % If vo_time in s is close to next lidar scan
+    i
+    vo_time_s(i)
+    lidar_time_s(next_lidar_scan_index)
     abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index))
     if i - vo_index_at_last_sync > 5
-        epsilon_delta_kappa = 3;
+        epsilon_delta_kappa = 10;
+    else
+        epsilon_delta_kappa = 1;
     end
-    if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon 
+    if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < epsilon_delta_kappa*vo_lidar_time_epsilon 
         
         % IF first time set global point cloud to new scan
         if next_lidar_scan_index == initial_lidar_scan_index
