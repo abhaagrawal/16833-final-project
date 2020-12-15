@@ -53,10 +53,9 @@ time = readmatrix(time_path);
 milli = 1000000;
 ld = time(2:end) - time(1:end-1);
 ld = ld/milli;
-%assert(all(ld > 0))
-%assert(any(~[ld > 1]))
+
 if eq(date,"2015-11-13-10-28-08")
-time = time(2:end);
-scans = scans(2:end,1);
+    time = time(2:end);
+    scans = scans(2:end,1);
 end
 end

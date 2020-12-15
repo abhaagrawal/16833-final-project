@@ -1,5 +1,5 @@
 function [aff3d] = stateToAffine3d(state)
-%STATETOAFFINE3D Summary of this function goes here
+%STATETOAFFINE3D Turns a 6 x 1 state into an affine3d object
 %   state == [x y z rx ry rz]
 assert(all(size(state) == [6 1]),"State must be 6 x 1");
 

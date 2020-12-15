@@ -1,4 +1,4 @@
-%%
+%% Control variables
 vo_freq = 16;
 lidar_freq = 12.5;
 ins_freq = 50;
@@ -13,15 +13,20 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     fprintf("Loading Data... ")
 %     date = "2014-06-25-16-22-15";
     date = "2015-11-13-10-28-08";
+    
+    % Load data
     [vo,vo_time,scale] = get_vo(date);
     [scans,lidar_time] = get_lidar(date,1);
     [ins,ins_time] = get_ins(date);
     [gps, gps_time] = get_gps(date);
+    
+    % Find the earliest time stamp
     [first_time,first_ind] = ...
         min([vo_time(1),lidar_time(1),vo_time(1)]);
     [last_time,last_ind] = ...
         max([vo_time(end),lidar_time(end),vo_time(end)]);
     
+    % Adjust time to be in seconds
     vo_time_s = (vo_time-first_time)/milli;
     lidar_time_s = (lidar_time-first_time)/milli;
     ins_time_s = (ins_time-first_time)/milli;
@@ -35,21 +40,15 @@ if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     vo_state(1:3,:) = vo_state(1:3,:)/scale; % Remove scaling from translation values
     vo(:,1:3) = vo(:,1:3)/scale;
 end
-%% ??????
 
 % How close lidar and vo need to be to count as same time
 vo_lidar_time_epsilon = 2*abs((1/vo_freq) - (1/lidar_freq));
 gps_lidar_time_epsilon = 2*abs((1/gps_freq) - (1/lidar_freq));
 ins_lidar_time_epsilon = 2*abs((1/ins_freq) - (1/lidar_freq));
 
+% Initalization
 next_lidar_scan_index = 1;
 global_pointcloud = [];
-
-% Lidar starts before vo, bypass early measuremnts
-while lidar_time_s(next_lidar_scan_index) < vo_time_s(1)
-    next_lidar_scan_index = next_lidar_scan_index + 1;
-end
-initial_lidar_scan_index = next_lidar_scan_index;
 
 % Keep track of state since vo and lidar last aligned
 state_at_last_sync = [];
@@ -59,14 +58,22 @@ error = [];
 last_gps_idx = 1;
 nan_flag = 0;
 
-%disp(vo_state(:,end))
+% Lidar starts before vo, bypass early measuremnts
+while lidar_time_s(next_lidar_scan_index) < vo_time_s(1)
+    next_lidar_scan_index = next_lidar_scan_index + 1;
+end
+initial_lidar_scan_index = next_lidar_scan_index;
+
+
 % Loop through each vo state
 for i = 1:size(vo_state,2)-1
-%for i = 1:2
+    
+    % Display current vo iteration
     if (mod(i,100) == 0)
         fprintf("VO Iteration %d/%d\n",i,size(vo_state,2)-1);
     end
-    %%%% If there are no more lidar scans
+    
+    % If there are no more lidar scans
     if next_lidar_scan_index > size(scans,1)
         new_state_estimate = state_at_last_sync + vo_state(:,i) - vo_state(:,i-1);
         state_at_each_timestep = [state_at_each_timestep,new_state_estimate];
@@ -75,7 +82,6 @@ for i = 1:size(vo_state,2)-1
     end
     
     % If vo_time in s is close to next lidar scan
-    abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index))
     if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon 
         vo_index_at_last_sync = i;
         % IF first time set global point cloud to new scan
@@ -95,12 +101,7 @@ for i = 1:size(vo_state,2)-1
         % Else merge into global pointcloud
 
         % COMPLEMENTARY FILTER
-        % Get transform from lidar
-        % Get diff in state from last sync via vo
-
-        %vo_state_diff = state_at_last_sync - vo_state(:,i);
         vo_state_diff = vo_state(:,i) - vo_state(:,vo_index_at_last_sync);
-        % vo_state_diff = vo_state(:,i) - state_at_last_sync;
 
         % Get diff in state from last sync via lidar
         rig3d = pcregistericp(global_pointcloud, scans{next_lidar_scan_index});
@@ -117,9 +118,6 @@ for i = 1:size(vo_state,2)-1
         [comp_aff3d] = stateToAffine3d(new_state_estimate(:,1));
         
         % Trasnform scan to global coords
-%         new_points_global = ...
-%             pctransform(scans{next_lidar_scan_index},comp_aff3d); % <-- iz broken
-        %[vo_aff3d] = stateToAffine3d(vo_state(:,i));
         new_points_global = ...
             pctransform(scans{next_lidar_scan_index},vo_aff3d);
 
@@ -134,10 +132,8 @@ for i = 1:size(vo_state,2)-1
         
         % Compare with GPS data
         for j = last_gps_idx:size(gps_time,1)
-            %disp(gps_time(j) - vo_time(j))
             if (abs(gps_time_s(j) - vo_time_s(i)) < gps_lidar_time_epsilon)
                 error = [error ; norm((ins(1:3,j)-ins(1:3,1))-new_state_estimate(1:3,1))];
-                %error = [error ; norm((gps(1:3,j)-gps(1:3,1))-new_state_estimate(1:3,1))];
                 last_gps_idx = j+1;
                 break;
             end
@@ -152,10 +148,10 @@ for i = 1:size(vo_state,2)-1
     end
 end
 
+% Display Results
 pcshow(global_pointcloud)
 xlabel("X")
 ylabel("Y tho")
 zlabel("Z")
-disp(error)
 visualize_two_state(ins, state_at_each_timestep,"error");
 

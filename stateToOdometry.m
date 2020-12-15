@@ -7,7 +7,7 @@ function [odom] = stateToOdometry(state)
 %
 %   state ordering is in eular xyz
 %   [tx ty tz rx ry rz]'
-size(state)
+
 assert(size(state,1)==6,"State should have 6 rows");
 assert(size(state,2)>=2,"State mus have atleast 2 entries");
 num_states = size(state,2);
