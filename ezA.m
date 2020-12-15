@@ -4,14 +4,14 @@ lidar_freq = 12.5;
 ins_freq = 50;
 gps_freq = 5;
 milli = 1000000;
-merge_step_size = 0.5; %0.5; %m
+merge_step_size = 0.2; %0.5; %m
 alpha = 0.984; % 1 == vo, 0 == lidar
 %alpha = 1
 close all
 %% Grab Data
 if ~exist('DATA_IS_LOADED','var') || ~DATA_IS_LOADED
     fprintf("Loading Data... ")
-    %date = "2014-06-25-16-22-15";
+%     date = "2014-06-25-16-22-15";
     date = "2015-11-13-10-28-08";
     [vo,vo_time,scale] = get_vo(date);
     [scans,lidar_time] = get_lidar(date,1);
@@ -64,7 +64,7 @@ nan_flag = 0;
 for i = 1:size(vo_state,2)-1
 %for i = 1:2
     if (mod(i,100) == 0)
-        fprintf("Iteration %d/%d",i,size(vo_state,2)-1)
+        fprintf("VO Iteration %d/%d\n",i,size(vo_state,2)-1);
     end
     %%%% If there are no more lidar scans
     if next_lidar_scan_index > size(scans,1)
@@ -75,6 +75,7 @@ for i = 1:size(vo_state,2)-1
     end
     
     % If vo_time in s is close to next lidar scan
+    abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index))
     if abs(vo_time_s(i) - lidar_time_s(next_lidar_scan_index)) < vo_lidar_time_epsilon 
         vo_index_at_last_sync = i;
         % IF first time set global point cloud to new scan
@@ -118,7 +119,7 @@ for i = 1:size(vo_state,2)-1
         % Trasnform scan to global coords
 %         new_points_global = ...
 %             pctransform(scans{next_lidar_scan_index},comp_aff3d); % <-- iz broken
-        [vo_aff3d] = stateToAffine3d(vo_state(:,i));
+        %[vo_aff3d] = stateToAffine3d(vo_state(:,i));
         new_points_global = ...
             pctransform(scans{next_lidar_scan_index},vo_aff3d);
 
@@ -144,6 +145,9 @@ for i = 1:size(vo_state,2)-1
 
         % Update next scan
         next_lidar_scan_index = next_lidar_scan_index + 1;
+        if (mod(next_lidar_scan_index,20) == 0)
+            fprintf("Lidar Scan %d/%d\n",next_lidar_scan_index,numel(scans))
+        end
         
     end
 end
