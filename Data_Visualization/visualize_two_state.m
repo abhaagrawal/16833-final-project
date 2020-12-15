@@ -17,12 +17,14 @@ function visualize_two_state(state1,state2,name)
 % state2 = odometryToState(state2(:,1), odom2);
 % state1 = state1/10000;
 % state2 = state2/10000;
+assert(size(state1,1) == 6)
+assert(size(state2,1) == 6)
 state1 = state1 - state1(:,1);
 state2 = state2 - state2(:,1);
 disp(state2(:,1))
 disp(state1(:,1))
-max_dim = max(state2(1:3,:),[],'all');
-min_dim = min(state2(1:3,:),[],'all');
+max_dim = max(state1(1:3,:),[],'all');
+min_dim = min(state1(1:3,:),[],'all');
 %xlim([min_dim max_dim])
 %ylim([min_dim max_dim])
 %zlim([min_dim max_dim])
